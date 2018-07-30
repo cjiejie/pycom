@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ui_my import Ui_MainWindow
-import sys
+import sys, time, datetime
 import serial.tools.list_ports
 import myhandle
 import threading
@@ -33,10 +33,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.obj_send_cmd.clicked.connect(self.WindowSendDataCmd)
 
     def ThreadStartUp(self):
-        self.handle.ThreadStart()
+        print("here is thread start:", sys._getframe().f_lineno)
+        t1 = ReadDataThread(self.handle)
+        t2 = SendDataThread(self.handle)
+        t1.start()
+        t2.start()
 
     def WindowGetData(self,str):
-        self.obj_get_data.append(str)
+        print("here is getdata:", sys._getframe().f_lineno)
+        self.obj_get_data.setText("1111...")
 
     def WindowSendData(self):
         self.obj_send_data.setText("...")
@@ -87,11 +92,47 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         print("here is :", sys._getframe().f_lineno)
 
     def WindowGetData(self, p_str):
-        self.obj_get_data.setText(p_str)
+        self.obj_get_data.setText("1111")
 
     def WindowSendData(self, p_str):
         self.obj_send_data.setText(p_str)
 
     def WindowStu(self, p_str):
         self.obj_sta.setText(p_str)
+
+class ReadDataThread(threading.Thread):
+    def __init__(self, parent):
+        self.parent = parent
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.name = "ReadData"
+        print("here is ReadDataThread:", sys._getframe().f_lineno)
+
+        while True:
+            while self.parent.GetComPower():
+                try:
+                    data = self.parent.fserial.readline()
+                except:
+                    print("read err!")
+                    time.sleep(5)
+                if len(data) <= 0:
+                    #10ms 读
+                    print("read len err!")
+                    time.sleep(0.01)
+                    continue
+                else:
+                    print("read: %s", data)
+                    MainWindow.WindowGetData(MainWindow(), data)
+            time.sleep(0.05)
+
+class SendDataThread(threading.Thread):
+    def __init__(self, name=""):
+        threading.Thread.__init__(self)
+        self.name = name
+
+    def run(self):
+        global fserial
+        self.name = "ReadData"
+        print("here is SendDataThread:", sys._getframe().f_lineno)
 

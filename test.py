@@ -3,8 +3,6 @@ from mainwindow import MainWindow
 import sys
 
 
-tmp_str = "OK"
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = MainWindow()
