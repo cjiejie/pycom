@@ -43,7 +43,6 @@ class ComClass:
         try:
             self.fserial = serial.Serial(self.port, self.baud, timeout=60)
             print("The Serial port open OK!")
-            print("com_power is :", self.com_power)
             self.com_power = True
             return True
         except:
@@ -53,10 +52,5 @@ class ComClass:
 
     def CloseCom(self):
         print("Close Serial port!")
-        print("com_power is :", self.com_power)
         self.fserial.close()
         self.com_power = False
-
-
-
-
