@@ -5,6 +5,8 @@ import serial.tools.list_ports
 import myhandle
 import threading
 import queue
+import ctypes
+import inspect
 
 com_on_off = False
 wifi_on_off = False
@@ -18,7 +20,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.que = queue.Queue(2048)
         self.handle = myhandle.ComClass()
-
+        self.t1 = None
+        self.t2 = None
+        self.t3 = None
         self.setupUi(self)
 
         self.obj_get_data.setText("wait...")
@@ -36,12 +40,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def ThreadStartUp(self):
         print("here is thread start:", sys._getframe().f_lineno)
-        t1 = ReadDataThread(self.handle, self)
-        t2 = SendDataThread(self.handle)
-        t3 = ShowGetDataThread(self)
-        t1.start()
-        t2.start()
-        t3.start()
+        self.t1 = ReadDataThread(self.handle, self)
+        self.t2 = SendDataThread(self.handle)
+        self.t3 = ShowGetDataThread(self)
+        self.t1.start()
+        self.t2.start()
+        self.t3.start()
+
+    def ThreadStop(self):
+        print("here is thread stop:", sys._getframe().f_lineno)
+        ExitThread(self.t1.ident, SystemExit)
+        ExitThread(self.t2.ident, SystemExit)
+        ExitThread(self.t3.ident, SystemExit)
 
     def WindowGetData(self, p_str):
         # self.obj_get_data.append(p_str)
@@ -159,3 +169,18 @@ class SendDataThread(threading.Thread):
         print("here is SendDataThread:", sys._getframe().f_lineno)
         while True:
             time.sleep(1)
+
+
+def ExitThread(tid, exctype):
+    """raises the exception, performs cleanup if needed"""
+    tid = ctypes.c_long(tid)
+    if not inspect.isclass(exctype):
+        exctype = type(exctype)
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+    if res == 0:
+        raise ValueError("invalid thread id")
+    elif res != 1:
+        # """if it returns a number greater than one, you're in trouble,
+        # and you should call it again with exc=NULL to revert the effect"""
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+        raise SystemError("PyThreadState_SetAsyncExc failed")

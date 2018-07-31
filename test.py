@@ -10,6 +10,15 @@ if __name__ == "__main__":
 
     mainWindow.ThreadStartUp()
 
-    sys.exit(app.exec_())
+    exit_flag = app.exec_()
+
+    print("exit_flag:%d"%exit_flag)
+
+    if not exit_flag:
+        mainWindow.ThreadStop()
+        print("system exit!")
+        sys.exit()
+
+
 
 
