@@ -44,12 +44,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         t3.start()
 
     def WindowGetData(self, p_str):
+        # self.obj_get_data.append(p_str)
+        self.obj_get_data.insertPlainText(p_str)
+        # 将滚动条跳转到最底处
         cursor = self.obj_get_data.textCursor()
+        cursor.movePosition(QtGui.QTextCursor.End)
         self.obj_get_data.setTextCursor(cursor)
-        # for i in p_str:
-        #     print('%#x' % ord(i))
-        #     self.obj_get_data.append(i)
-        self.obj_get_data.append(p_str.rstrip('\r\n'))
 
     def WindowSendData(self):
         self.obj_send_data.setText("...")
@@ -118,18 +118,19 @@ class ReadDataThread(threading.Thread):
                 try:
                     while self.parent.fserial.inWaiting() > 0 and len(data) < 100:
                         try:
-                            data += bytes.decode(self.parent.fserial.readline())
-                        except:
                             data += bytes.decode(self.parent.fserial.read())
+                        except:
+                            data = ''
                 except:
-                    print("read except")
                     data = ''
+                    break
                 if len(data) > 0:
                     try:
-                        print("read:%s"%data)
+                        # print("read:%s"%data)
                         self.parent_ui.que.put(data)
                     except:
                         continue
+            time.sleep(0.1)
 
 
 class ShowGetDataThread(threading.Thread):
@@ -140,13 +141,14 @@ class ShowGetDataThread(threading.Thread):
     def run(self):
         print("here is ShowGetDataThread:", sys._getframe().f_lineno)
         while True:
-            data = '123'
-            # while self.parent_ui.que.empty() == False and len(data) < 100:
-            #     data = data+self.parent_ui.que.get()
+            data = ''
+            while self.parent_ui.que.empty() == False and len(data) < 100:
+                data = data+self.parent_ui.que.get()
             if len(data) > 0:
                 # print("here is ShowGetDataThread: %s"%data)
                 self.parent_ui.WindowGetData(data)
-                time.sleep(1)
+            else:
+                time.sleep(0.1)
 
 class SendDataThread(threading.Thread):
     def __init__(self, name=""):
@@ -154,6 +156,6 @@ class SendDataThread(threading.Thread):
         self.name = name
 
     def run(self):
-        global fserial
-        self.name = "ReadData"
         print("here is SendDataThread:", sys._getframe().f_lineno)
+        while True:
+            time.sleep(1)
